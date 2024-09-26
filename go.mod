@@ -1,4 +1,4 @@
-module github.com/mcpt/sentinel
+module github.com/mcpt/Sentinel
 
 go 1.22
 
@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.38
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.36
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.63.2
-	github.com/robfig/cron/v3 v3.0.0
+	github.com/robfig/cron/v3 v3.0.1
 )
 
 require (

@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23-alpine AS builder
 LABEL org.opencontainers.image.source="https://github.com/mcpt/sentinel"
 LABEL org.opencontainers.image.authors="Jason Cameron <sentinel+mcpt@jasoncameron.dev>"
 
