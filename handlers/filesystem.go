@@ -86,7 +86,6 @@ func (h *FileSystemHandler) Backup(ctx context.Context) (string, error) {
 	if err := cmd.Run(); err != nil {
 		return "", fmt.Errorf("failed to create archive: %v", err)
 	}
-
 	return archivePath, nil
 }
 

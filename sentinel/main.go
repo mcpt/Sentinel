@@ -4,10 +4,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/mcpt/Sentinel/compression"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -126,31 +129,29 @@ func performBackup(handlerList []handlers.BackupHandler, uploader *storage.S3Upl
 		}
 	}
 
-	//// Create final archive
-	//compressor, err := compression.NewCompressor(config.Cfg.Compression.Format, config.Cfg.Compression.Level)
-	//if err != nil {
-	//	return err
-	//}
-	//fmt.Printf("Compressing backups: %s\n", backupFiles)
-	//err = compressor.Compress(backupFiles, backupPath)
-	//if err != nil {
-	//	return err
-	//}
+	// Create final archive
+	filename := filepath.Join(config.Cfg.TempDir, fmt.Sprintf("backup.tar%s", compression.Ext(config.Cfg.Compression.Format)))
+	FileLocations := strings.Join(backupFiles, " ")
+	fmt.Printf("Compressing backups: %s\n", FileLocations)
+	cmd := exec.Command("tar",
+		"-I", config.Cfg.Compression.Format,
+		"-cf", filename, FileLocations)
+	fmt.Printf("Running command: %s\n", cmd.String())
+	if err := cmd.Run(); err != nil {
+		return err
+	}
 
 	// Upload final archive
 	if config.Cfg.Debug {
 		fmt.Printf("Uploading backup to S3: %s\n", backupPath)
 
 	}
-	for _, file := range backupFiles {
-		fmt.Printf("Uploading backup file: %s\n", file)
-		if err := uploader.UploadFile(ctx, file); err != nil {
-			return err
-		}
+
+	fmt.Printf("Uploading backup file: %s\n", filename)
+	err := uploader.UploadFile(ctx, filename)
+	if err != nil {
+		return err
 	}
-	//if err := uploader.UploadFile(ctx, backupPath); err != nil {
-	//	return err
-	//}
 
 	// Cleanup
 	for _, file := range backupFiles {
@@ -159,7 +160,7 @@ func performBackup(handlerList []handlers.BackupHandler, uploader *storage.S3Upl
 			return err
 		}
 	}
-	err := os.RemoveAll(config.Cfg.TempDir)
+	err = os.RemoveAll(config.Cfg.TempDir)
 	if err != nil {
 		log.Printf("Failed to remove temporary backup directory: %v", err)
 	}
