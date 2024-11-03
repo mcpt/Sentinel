@@ -73,9 +73,13 @@ func validateConfig(config *Config) error {
 		config.TempDir = dir
 	}
 
-	if config.Compression.Format == "" {
+	// check if ompression format is supported
+	if config.Compression.Format != "zlib" && config.Compression.Format != "gzip" && config.Compression.
+		Format != "zstd" || config.Compression.Format == "" {
+		fmt.Println("Compression format not supported. Please use zlib, gzip or zstd. Defaulting to zstd.")
 		config.Compression.Format = "zstd"
 	}
 
+	fmt.Printf("Temp dir: %s\n", config.TempDir)
 	return nil
 }
