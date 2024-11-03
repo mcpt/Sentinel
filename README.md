@@ -1,120 +1,134 @@
 # Sentinel
 
-Sentinel is an automated backup system designed to secure your MariaDB databases and specified files to S3-compatible storage solutions.
+Sentinel is a robust, modular backup system designed to secure your MySQL/MariaDB databases and files to S3-compatible storage solutions, with support for various compression formats and flexible scheduling.
 
 ## Features
 
-- Automated MariaDB database backups using mysqldump
-- File and directory backups using gitignore-style pattern matching
-- Scheduled backups using cron syntax
-- Compatible with S3, Cloudflare R2, MinIO, and other S3-compatible storage
-- Configuration via environment variables for enhanced security
-- Dockerized for easy deployment
-- Optional configuration file path specified via command-line flag
+- Modular backup system supporting multiple backup sources:
+   - MySQL/MariaDB database backups using mysqldump
+   - File and directory backups with pattern matching
+   - Easy to extend with new backup handlers
+- Advanced compression options:
+   - Support for gzip and zstd compression
+   - Configurable compression levels
+- Flexible storage options:
+   - Compatible with S3, Cloudflare R2, MinIO, and other S3-compatible storage
+   - Configurable upload parameters (part size, concurrency)
+- Configurable via TOML configuration file
+- Debug mode for troubleshooting
+- Temporary directory management
+- Docker support with optional container database backup
 
 ## Prerequisites
 
 - Go 1.16+ (for building from source)
-- Docker (for containerized deployment)
-- MariaDB
+- Docker (optional, for containerized deployment)
+- MySQL/MariaDB (if database backup is enabled)
 - S3-compatible storage account
+
+## Configuration
+
+Sentinel uses a TOML configuration file. Here's a sample configuration with all available options:
+
+```toml
+# Backup system configuration
+schedule = "0 4 * * *"  # Daily at 4 AM (if not specified, backup will run immediately)
+temp_dir = ""          # Optional: temporary directory for backups
+debug = false          # Enable debug logging
+
+[compression]
+format = "gzip"        # Supported: "gzip", "zstd"
+level = 3             # Compression level (1-9)
+
+[mysql]
+enabled = false        # Enable/disable MySQL backup
+host = "localhost"
+port = "3306"
+user = "backup_user"
+password = "backup_password"
+database = "myapp"
+docker_container = ""  # Optional: MySQL docker container name
+
+[filesystem]
+enabled = true
+base_path = "/path/to/backup"
+include_patterns = [   # Glob patterns for files to include
+    "*.txt",
+    "*.pdf",
+    "config/**",
+    "data/**"
+]
+exclude_patterns = [   # Glob patterns for files to exclude
+    ".git/**",
+    "node_modules/**",
+    "tmp/**",
+    "*.tmp"
+]
+
+[s3]
+endpoint = "https://your-endpoint.com"
+region = "auto"       # Use "auto" for services like R2
+bucket = "your-bucket"
+access_key_id = "your-access-key"
+secret_access_key = "your-secret-key"
+max_concurrency = 10  # Maximum concurrent uploads
+part_size = 0        # Multipart upload part size (0 for auto)
+```
 
 ## Installation
 
 ### Using Docker
 
 1. Clone the repository:
-   ```
-   git clone https://github.com/yourusername/sentinel.git
+   ```bash
+   git clone https://github.com/mcpt/sentinel.git
    ```
 
 2. Build the Docker image:
-   ```
+   ```bash
    docker build -t sentinel .
    ```
 
-3. Create a `backup_include.txt` file with your backup patterns:
-   ```
-   /path/to/important/files/*
-   !/path/to/important/files/temp
-   /var/www/html/**/*.php
-   ```
+3. Create your config.toml file based on the example above.
 
 4. Run the container:
-   ```
+   ```bash
    docker run -d --name sentinel \
-     -v /path/to/your/backup_include.txt:/root/backup_include.txt \
-     -e DB_HOST=your_db_host \
-     -e DB_PORT=your_db_port \
-     -e DB_USER=your_db_user \
-     -e DB_PASSWORD=your_db_password \
-     -e DB_NAME=your_db_name \
-     -e S3_ENDPOINT=your_s3_endpoint \
-     -e S3_REGION=your_s3_region \
-     -e S3_ACCESS_KEY_ID=your_s3_access_key \
-     -e S3_SECRET_ACCESS_KEY=your_s3_secret_key \
-     -e S3_BUCKET=your_s3_bucket \
+     -v /path/to/your/config.toml:/app/config.toml \
+     -v /path/to/backup:/data \
      sentinel
-   ```
-
-   To use a custom path for the configuration file:
-   ```
-   docker run -d --name sentinel \
-     -v /path/to/your/custom_config.txt:/root/custom_config.txt \
-     ... [other environment variables] ...
-     sentinel --config /root/custom_config.txt
    ```
 
 ### Building from Source
 
 1. Clone the repository:
-   ```
+   ```bash
    git clone https://github.com/yourusername/sentinel.git
    ```
 
 2. Navigate to the project directory:
-   ```
+   ```bash
    cd sentinel
    ```
 
 3. Build the binary:
-   ```
-   go build -o sentinel
-   ```
-
-4. Set up environment variables and run:
-   ```
-   export DB_HOST=your_db_host
-   export DB_PORT=your_db_port
-   # ... set other environment variables ...
-   ./sentinel
+   ```bash
+   go build -o sentinel cmd/backup-system/main.go
    ```
 
-   Or, to use a custom configuration file:
-   ```
-   ./sentinel --config /path/to/your/custom_config.txt
-   ```
-
-## Configuration
-
-1. Create a configuration file (default: `backup_include.txt`) with your backup patterns:
-   ```
-   /path/to/important/files/*
-   !/path/to/important/files/temp
-   /var/www/html/**/*.php
+4. Create your config.toml and run:
+   ```bash
+   ./sentinel --config /path/to/config.toml
    ```
 
-2. Set the following environment variables:
-   - `DB_HOST`: MariaDB host
-   - `DB_PORT`: MariaDB port
-   - `DB_USER`: MariaDB username
-   - `DB_PASSWORD`: MariaDB password
-   - `DB_NAME`: Database name
-   - `S3_ENDPOINT`: S3-compatible storage endpoint
-   - `S3_REGION`: S3 region
-   - `S3_ACCESS_KEY_ID`: S3 access key
-   - `S3_SECRET_ACCESS_KEY`: S3 secret key
-   - `S3_BUCKET`: S3 bucket name
+## Architecture
+
+Sentinel uses a modular architecture with the following components:
+
+- Backup Handlers: Implement the `BackupHandler` interface for different backup sources
+- Storage: S3-compatible storage implementation
+- Compression: Supports multiple compression formats
+- Configuration: TOML-based configuration system
 
 ## Development
 
@@ -125,6 +139,16 @@ To contribute to Sentinel:
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+### Adding New Backup Handlers
+
+Implement the `BackupHandler` interface to add support for new backup sources:
+
+```go
+type BackupHandler interface {
+    Backup(ctx context.Context) (string, error)
+}
+```
 
 ## License
 

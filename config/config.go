@@ -18,13 +18,12 @@ type Config struct {
 	} `toml:"compression"`
 
 	MySQL struct {
-		Enabled         bool   `toml:"enabled"`
-		Host            string `toml:"host"`
-		Port            string `toml:"port"`
-		User            string `toml:"user"`
-		Password        string `toml:"password"`
-		Database        string `toml:"database"`
-		DockerContainer string `toml:"docker_container"`
+		Enabled  bool   `toml:"enabled"`
+		Host     string `toml:"host"`
+		Port     string `toml:"port"`
+		User     string `toml:"user"`
+		Password string `toml:"password"`
+		Database string `toml:"database"`
 	} `toml:"mysql"`
 
 	Filesystem struct {
