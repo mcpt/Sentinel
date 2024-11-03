@@ -17,8 +17,9 @@ type FileSystemHandler struct {
 }
 
 func NewFileSystemHandler() (*FileSystemHandler, error) {
+	tmpDir, _ := os.MkdirTemp("", "filesystem")
 	return &FileSystemHandler{
-		tempDir: filepath.Join(config.Cfg.TempDir, "filesystem"),
+		tempDir: tmpDir,
 	}, nil
 }
 
@@ -83,7 +84,8 @@ func (h *FileSystemHandler) Backup(ctx context.Context) (string, error) {
 	archivePath := filepath.Join(config.Cfg.TempDir, fmt.Sprintf("filesystem.tar%s",
 		compression.Ext(config.Cfg.Compression.Format)))
 
-	cmd := exec.Command("tar", "-I", config.Cfg.Compression.Format, "-cf", archivePath, "-C", h.tempDir, ".")
+	cmd := exec.Command("tar", "--use-compress-program", config.Cfg.Compression.Format, "-cf", archivePath, "-C",
+		h.tempDir, ".")
 	if err := cmd.Run(); err != nil {
 		return "", fmt.Errorf("failed to create archive: %v", err)
 	}
