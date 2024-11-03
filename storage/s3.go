@@ -147,7 +147,6 @@ func (u *S3Uploader) uploadFile(ctx context.Context, filePath, basePath string) 
 
 	// Calculate relative path for S3 key
 	relPath, err := filepath.Rel(basePath, filePath)
-	fmt.Printf("relPath: %s\n", filePath)
 	if err != nil {
 		return fmt.Errorf("failed to get relative path: %v", err)
 	}
