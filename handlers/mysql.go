@@ -25,13 +25,13 @@ func (h *MySQLHandler) Backup(ctx context.Context) (string, error) {
 	filename := filepath.Join(h.tempDir, fmt.Sprintf("mysql_%s.sql", timestamp))
 	cmd := exec.CommandContext(ctx, "mysqldump",
 		"--single-transaction",
+		"--quick",
+		"--result-file=", filename,
 		"-h", config.Cfg.MySQL.Host,
 		"-P", config.Cfg.MySQL.Port,
 		"-u", config.Cfg.MySQL.User,
 		fmt.Sprintf("-p%s", config.Cfg.MySQL.Password),
-		config.Cfg.MySQL.Database,
-		"--quick",
-		"-r ", filename)
+		config.Cfg.MySQL.Database)
 
 	output, err := cmd.Output()
 	if err != nil {
