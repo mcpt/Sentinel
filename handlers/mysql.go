@@ -41,3 +41,7 @@ func (h *MySQLHandler) Backup(ctx context.Context) (string, error) {
 
 	return filename, nil
 }
+
+func (h *MySQLHandler) Name() string {
+	return "MySQL Backup"
+}

@@ -104,7 +104,7 @@ func performBackup(handlerList []handlers.BackupHandler, uploader *storage.S3Upl
 		wg.Add(1)
 		go func(handler handlers.BackupHandler) {
 			defer wg.Done()
-
+			fmt.Printf("Performing backup: %s\n", handler.Name())
 			backupFile, err := handler.Backup(ctx)
 			if err != nil {
 				errors <- err

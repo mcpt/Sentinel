@@ -110,3 +110,7 @@ func copyFile(src, dst string) error {
 	_, err = io.Copy(destination, source)
 	return err
 }
+
+func (h *FileSystemHandler) Name() string {
+	return "Filesystem Backup"
+}
