@@ -17,4 +17,4 @@ WORKDIR /root/
 
 COPY --from=builder /app/sentinel .
 
-CMD ["./sentinel"]
+ENTRYPOINT ["./sentinel"]
