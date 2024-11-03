@@ -18,13 +18,12 @@ type FileSystemHandler struct {
 
 func NewFileSystemHandler() (*FileSystemHandler, error) {
 	return &FileSystemHandler{
-		tempDir: "/tmp/backups/fs",
+		tempDir: filepath.Join(config.Cfg.TempDir, "filesystem"),
 	}, nil
 }
 
 func (h *FileSystemHandler) Backup(ctx context.Context) (string, error) {
-	tempDir := filepath.Join(config.Cfg.TempDir, "filesystem")
-	if err := os.MkdirAll(tempDir, 0755); err != nil {
+	if err := os.MkdirAll(h.tempDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create temp directory: %v", err)
 	}
 
@@ -67,7 +66,7 @@ func (h *FileSystemHandler) Backup(ctx context.Context) (string, error) {
 		}
 
 		// Create destination directory
-		destPath := filepath.Join(tempDir, relPath)
+		destPath := filepath.Join(h.tempDir, relPath)
 		if info.IsDir() {
 			return os.MkdirAll(destPath, info.Mode())
 		}
@@ -84,7 +83,7 @@ func (h *FileSystemHandler) Backup(ctx context.Context) (string, error) {
 	archivePath := filepath.Join(config.Cfg.TempDir, fmt.Sprintf("filesystem.tar%s",
 		compression.Ext(config.Cfg.Compression.Format)))
 
-	cmd := exec.Command("tar", "-I", config.Cfg.Compression.Format, "-cf", archivePath, "-C", tempDir, ".")
+	cmd := exec.Command("tar", "-I", config.Cfg.Compression.Format, "-cf", archivePath, "-C", h.tempDir, ".")
 	if err := cmd.Run(); err != nil {
 		return "", fmt.Errorf("failed to create archive: %v", err)
 	}

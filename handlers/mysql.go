@@ -21,7 +21,7 @@ type MySQLHandler struct {
 
 func NewMySQLHandler() (*MySQLHandler, error) {
 	return &MySQLHandler{
-		tempDir: "/tmp/backups/mysql",
+		tempDir: filepath.Join(config.Cfg.TempDir, "mysql"),
 	}, nil
 }
 
@@ -71,6 +71,7 @@ func (h *MySQLHandler) Backup(ctx context.Context) (string, error) {
 		"--extended-insert",
 		"--create-options",
 		"--quick",
+		"--result-file=", filename,
 		"-h", config.Cfg.MySQL.Host,
 		"-P", config.Cfg.MySQL.Port,
 		"-u", config.Cfg.MySQL.User,
