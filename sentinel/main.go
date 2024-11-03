@@ -133,8 +133,9 @@ func performBackup(handlerList []handlers.BackupHandler, uploader *storage.S3Upl
 	filename := filepath.Join(config.Cfg.TempDir, fmt.Sprintf("backup.tar%s", compression.Ext(config.Cfg.Compression.Format)))
 	FileLocations := strings.Join(backupFiles, " ")
 	fmt.Printf("Compressing backups: %s\n", FileLocations)
+	compressor, _ := compression.NewCompressor(config.Cfg.Compression.Format, config.Cfg.Compression.Level)
 	cmd := exec.Command("tar",
-		"-I", config.Cfg.Compression.Format,
+		fmt.Sprintf("-I %s", compressor.Cmd()),
 		"-cf", filename, FileLocations)
 	fmt.Printf("Running command: %s\n", cmd.String())
 	if err := cmd.Run(); err != nil {

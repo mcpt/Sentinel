@@ -2,7 +2,6 @@ package compression
 
 import (
 	"compress/gzip"
-	"compress/zlib"
 	"fmt"
 	"github.com/klauspost/compress/zstd"
 	"io"
@@ -11,8 +10,8 @@ import (
 
 func Ext(format string) string {
 	switch format {
-	case "zlib":
-		return ".zlib"
+	//case "zlib":
+	//	return ".zlib"
 	case "gzip":
 		return ".gz"
 	case "zstd":
@@ -24,23 +23,26 @@ func Ext(format string) string {
 
 type Compressor interface {
 	Compress(src []string, dst string) error
+	Cmd() string
 }
 
-type ZlibCompressor struct {
-	level int // 1-9 see https://pkg.go.dev/compress/flate#pkg-constants
-}
+//type ZlibCompressor struct {
+//	level int // 1-9 see https://pkg.go.dev/compress/flate#pkg-constants (with -1 being the default and 0 being no compression)
+//}
 
 type ZstdCompressor struct {
 	level int // see https://pkg.go.dev/github.com/klauspost/compress/zstd#EncoderLevel
 }
-type GzipCompressor struct{}
+type GzipCompressor struct {
+	level int // 1-9
+}
 
 func NewCompressor(format string, level int) (Compressor, error) {
 	switch format {
-	case "zlib":
-		return &ZlibCompressor{level: level}, nil
+	//case "zlib":
+	//	return &ZlibCompressor{level: level}, nil
 	case "gzip":
-		return &GzipCompressor{}, nil
+		return &GzipCompressor{level: level}, nil
 	case "zstd":
 		return &ZstdCompressor{level: level}, nil
 	default:
@@ -48,37 +50,41 @@ func NewCompressor(format string, level int) (Compressor, error) {
 	}
 }
 
-func (c *ZlibCompressor) Compress(src []string, dst string) error {
-	f, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	zw, err := zlib.NewWriterLevel(f, c.level)
-	if err != nil {
-		return err
-	}
-	defer zw.Close()
-
-	for _, file := range src {
-		f, err := os.Open(file)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		_, err = io.Copy(zw, f)
-		if err != nil {
-			return err
-		}
-	}
-	err = zw.Flush()
-	if err != nil {
-		return err
-	}
-	return nil
-}
+//func (c *ZlibCompressor) Compress(src []string, dst string) error {
+//	f, err := os.Create(dst)
+//	if err != nil {
+//		return err
+//	}
+//	defer f.Close()
+//
+//	zw, err := zlib.NewWriterLevel(f, c.level)
+//	if err != nil {
+//		return err
+//	}
+//	defer zw.Close()
+//
+//	for _, file := range src {
+//		f, err := os.Open(file)
+//		if err != nil {
+//			return err
+//		}
+//		defer f.Close()
+//
+//		_, err = io.Copy(zw, f)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//	err = zw.Flush()
+//	if err != nil {
+//		return err
+//	}
+//	return nil
+//}
+//
+//func (c *ZlibCompressor) Cmd() string {
+//	return fmt.Sprintf("zlib -%d", c.level)
+//}
 
 func (c *GzipCompressor) Compress(src []string, dst string) error {
 	f, err := os.Create(dst)
@@ -103,6 +109,10 @@ func (c *GzipCompressor) Compress(src []string, dst string) error {
 		}
 	}
 	return nil
+}
+
+func (c *GzipCompressor) Cmd() string {
+	return fmt.Sprintf("gzip -%d", c.level)
 }
 
 func (c *ZstdCompressor) Compress(src []string, dst string) error {
@@ -131,4 +141,8 @@ func (c *ZstdCompressor) Compress(src []string, dst string) error {
 		}
 	}
 	return nil
+}
+
+func (c *ZstdCompressor) Cmd() string {
+	return fmt.Sprintf("zstd -%d", c.level)
 }
