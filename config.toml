@@ -1,0 +1,40 @@
+# Backup system configuration
+#schedule = "0 4 * * *"  # Daily at 4 AM
+temp_dir = "/tmp/backups"
+
+[compression]
+format = "zlib"  # or "gzip"
+level = 3        # Compression level (1-9)
+
+[mysql]
+enabled = true
+host = "localhost"
+port = "3306"
+user = "backup_user"
+password = "backup_password"
+database = "myapp"
+
+[filesystem]
+enabled = true
+base_path = "/var/www/myapp"
+include_patterns = [
+    "*.txt",
+    "*.pdf",
+    "config/**",
+    "data/**"
+]
+exclude_patterns = [
+    ".git/**",
+    "node_modules/**",
+    "tmp/**",
+    "*.tmp"
+]
+
+[s3]
+endpoint = "https://s3.amazonaws.com"
+region = "us-east-1"
+bucket = "my-backup-bucket"
+access_key_id = "your_access_key"
+secret_access_key = "your_secret_key"
+max_concurrency = 10
+part_size=0
