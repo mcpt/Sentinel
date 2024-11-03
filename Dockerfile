@@ -11,7 +11,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o sentinel
 
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates mariadb-client
+RUN apk --no-cache add ca-certificates mariadb-client tar
 
 WORKDIR /root/
 

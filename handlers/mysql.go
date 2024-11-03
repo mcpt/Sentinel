@@ -23,7 +23,6 @@ func NewMySQLHandler() (*MySQLHandler, error) {
 func (h *MySQLHandler) Backup(ctx context.Context) (string, error) {
 	timestamp := time.Now().Format("20060102_150405")
 	filename := filepath.Join(h.tempDir, fmt.Sprintf("mysql_%s.sql", timestamp))
-
 	cmd := exec.CommandContext(ctx, "mysqldump",
 		"-h", config.Cfg.MySQL.Host,
 		"-P", config.Cfg.MySQL.Port,

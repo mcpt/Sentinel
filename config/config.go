@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/BurntSushi/toml"
@@ -10,18 +11,20 @@ import (
 type Config struct {
 	Schedule    string `toml:"schedule"`
 	TempDir     string `toml:"temp_dir"`
+	Debug       bool   `toml:"debug"`
 	Compression struct {
 		Format string `toml:"format"` // "zstd" or "lz4"
 		Level  int    `toml:"level"`
 	} `toml:"compression"`
 
 	MySQL struct {
-		Enabled  bool   `toml:"enabled"`
-		Host     string `toml:"host"`
-		Port     string `toml:"port"`
-		User     string `toml:"user"`
-		Password string `toml:"password"`
-		Database string `toml:"database"`
+		Enabled         bool   `toml:"enabled"`
+		Host            string `toml:"host"`
+		Port            string `toml:"port"`
+		User            string `toml:"user"`
+		Password        string `toml:"password"`
+		Database        string `toml:"database"`
+		DockerContainer string `toml:"docker_container"`
 	} `toml:"mysql"`
 
 	Filesystem struct {
@@ -59,9 +62,16 @@ func Load(path string) error {
 }
 
 func validateConfig(config *Config) error {
+	if config.Debug {
+		fmt.Println("Debug mode enabled")
+	}
 
 	if config.TempDir == "" {
-		config.TempDir = os.TempDir()
+		dir, err := os.MkdirTemp("", "backups")
+		if err != nil {
+			log.Fatal(err)
+		}
+		config.TempDir = dir
 	}
 
 	if config.Compression.Format == "" {

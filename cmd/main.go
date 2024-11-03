@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/mcpt/Sentinel/compression"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -98,12 +98,6 @@ func performBackup(handlerList []handlers.BackupHandler, uploader *storage.S3Upl
 	if err := os.MkdirAll(config.Cfg.TempDir, 0755); err != nil {
 		return err
 	}
-	defer func(path string) {
-		err := os.RemoveAll(path)
-		if err != nil {
-			log.Printf("Failed to remove temporary backup directory: %v", err)
-		}
-	}(config.Cfg.TempDir)
 
 	// Perform backups concurrently
 	for _, h := range handlerList {
@@ -132,20 +126,31 @@ func performBackup(handlerList []handlers.BackupHandler, uploader *storage.S3Upl
 		}
 	}
 
-	// Create final archive
-	compressor, err := compression.NewCompressor(config.Cfg.Compression.Format, config.Cfg.Compression.Level)
-	if err != nil {
-		return err
-	}
-	err = compressor.Compress(backupFiles, backupPath)
-	if err != nil {
-		return err
-	}
+	//// Create final archive
+	//compressor, err := compression.NewCompressor(config.Cfg.Compression.Format, config.Cfg.Compression.Level)
+	//if err != nil {
+	//	return err
+	//}
+	//fmt.Printf("Compressing backups: %s\n", backupFiles)
+	//err = compressor.Compress(backupFiles, backupPath)
+	//if err != nil {
+	//	return err
+	//}
 
 	// Upload final archive
-	if err := uploader.UploadDirectory(ctx, backupPath, ""); err != nil {
-		return err
+	if config.Cfg.Debug {
+		fmt.Printf("Uploading backup to S3: %s\n", backupPath)
+
 	}
+	for _, file := range backupFiles {
+		fmt.Printf("Uploading backup file: %s\n", file)
+		if err := uploader.UploadFile(ctx, file); err != nil {
+			return err
+		}
+	}
+	//if err := uploader.UploadFile(ctx, backupPath); err != nil {
+	//	return err
+	//}
 
 	// Cleanup
 	for _, file := range backupFiles {
@@ -154,9 +159,9 @@ func performBackup(handlerList []handlers.BackupHandler, uploader *storage.S3Upl
 			return err
 		}
 	}
-	err = os.RemoveAll(backupPath)
+	err := os.RemoveAll(config.Cfg.TempDir)
 	if err != nil {
-		return err
+		log.Printf("Failed to remove temporary backup directory: %v", err)
 	}
 
 	return nil

@@ -68,7 +68,7 @@ func NewS3Uploader() (*S3Uploader, error) {
 }
 
 // UploadDirectory uploads an entire directory to S3
-func (u *S3Uploader) UploadDirectory(ctx context.Context, localPath string, s3Prefix string) error {
+func (u *S3Uploader) UploadDirectory(ctx context.Context, localPath string) error {
 	// Create a buffered channel to control concurrency
 	uploadChan := make(chan string, cfg.Cfg.S3.MaxConcurrency)
 	errChan := make(chan error, 1)
@@ -80,7 +80,7 @@ func (u *S3Uploader) UploadDirectory(ctx context.Context, localPath string, s3Pr
 		go func() {
 			defer wg.Done()
 			for path := range uploadChan {
-				if err := u.uploadFile(ctx, path, localPath, s3Prefix); err != nil {
+				if err := u.uploadFile(ctx, path, localPath); err != nil {
 					select {
 					case errChan <- err:
 					default:
@@ -128,7 +128,7 @@ func (u *S3Uploader) UploadDirectory(ctx context.Context, localPath string, s3Pr
 }
 
 // uploadFile handles the upload of a single file to S3
-func (u *S3Uploader) uploadFile(ctx context.Context, filePath, basePath, s3Prefix string) error {
+func (u *S3Uploader) uploadFile(ctx context.Context, filePath, basePath string) error {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to open file %s: %v", filePath, err)
@@ -137,13 +137,14 @@ func (u *S3Uploader) uploadFile(ctx context.Context, filePath, basePath, s3Prefi
 
 	// Calculate relative path for S3 key
 	relPath, err := filepath.Rel(basePath, filePath)
+	fmt.Printf("relPath: %s\n", filePath)
 	if err != nil {
 		return fmt.Errorf("failed to get relative path: %v", err)
 	}
 
-	// Create S3 key with prefix and timestamp
-	timestamp := time.Now().Format("20060102-150405")
-	s3Key := filepath.Join(s3Prefix, timestamp, relPath)
+	// use a human-readable timestamp
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+	s3Key := filepath.Join(timestamp, relPath)
 
 	// Create a pipe for streaming
 	pr, pw := io.Pipe()
@@ -160,7 +161,10 @@ func (u *S3Uploader) uploadFile(ctx context.Context, filePath, basePath, s3Prefi
 			Key:    aws.String(s3Key),
 			Body:   pr,
 		})
-		pr.Close()
+		err := pr.Close()
+		if err != nil {
+			log.Printf("Failed to close pipe: %v", err)
+		}
 	}()
 
 	// Copy file to pipe
@@ -181,6 +185,6 @@ func (u *S3Uploader) uploadFile(ctx context.Context, filePath, basePath, s3Prefi
 }
 
 // UploadFile uploads a single file to S3
-func (u *S3Uploader) UploadFile(ctx context.Context, filePath, s3Prefix string) error {
-	return u.uploadFile(ctx, filePath, filepath.Dir(filePath), s3Prefix)
+func (u *S3Uploader) UploadFile(ctx context.Context, filePath string) error {
+	return u.uploadFile(ctx, filePath, filepath.Dir(filePath))
 }

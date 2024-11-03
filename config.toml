@@ -1,22 +1,24 @@
 # Backup system configuration
 #schedule = "0 4 * * *"  # Daily at 4 AM
-temp_dir = "/tmp/backups"
+temp_dir = "" # Will create a new random temp directory if not specified
+debug = false
 
 [compression]
-format = "zlib"  # or "gzip"
+format = "gzip"  # or "gzip"
 level = 3        # Compression level (1-9)
 
 [mysql]
-enabled = true
+enabled = false
 host = "localhost"
 port = "3306"
 user = "backup_user"
 password = "backup_password"
 database = "myapp"
+#docker_container = "db"
 
 [filesystem]
 enabled = true
-base_path = "/var/www/myapp"
+base_path = "D:\\projects\\mcpt\\backups\\test"
 include_patterns = [
     "*.txt",
     "*.pdf",

@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"time"
 )
 
 type FileSystemHandler struct {
@@ -23,7 +22,7 @@ func NewFileSystemHandler() (*FileSystemHandler, error) {
 }
 
 func (h *FileSystemHandler) Backup(ctx context.Context) (string, error) {
-	tempDir := filepath.Join(config.Cfg.TempDir, "fs_backup")
+	tempDir := filepath.Join(config.Cfg.TempDir, "filesystem")
 	if err := os.MkdirAll(tempDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create temp directory: %v", err)
 	}
@@ -81,8 +80,7 @@ func (h *FileSystemHandler) Backup(ctx context.Context) (string, error) {
 	}
 
 	// Create tar.gz archive
-	timestamp := time.Now().Format("20060102_150405")
-	archivePath := filepath.Join(config.Cfg.TempDir, fmt.Sprintf("fs_backup_%s.tar.gz", timestamp))
+	archivePath := filepath.Join(config.Cfg.TempDir, "filesystem.tar.gz")
 
 	cmd := exec.Command("tar", "-czf", archivePath, "-C", tempDir, ".")
 	if err := cmd.Run(); err != nil {
