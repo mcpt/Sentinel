@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	cfg "github.com/mcpt/Sentinel/config"
+	"github.com/schollz/progressbar/v3"
 	"io"
 	"log"
 	"os"
@@ -127,13 +128,22 @@ func (u *S3Uploader) UploadDirectory(ctx context.Context, localPath string) erro
 	return nil
 }
 
-// uploadFile handles the upload of a single file to S3
 func (u *S3Uploader) uploadFile(ctx context.Context, filePath, basePath string) error {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to open file %s: %v", filePath, err)
 	}
 	defer file.Close()
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to get file info: %v", err)
+	}
+
+	bar := progressbar.DefaultBytes(
+		fileInfo.Size(),
+		fmt.Sprintf("uploading %s", filePath),
+	)
 
 	// Calculate relative path for S3 key
 	relPath, err := filepath.Rel(basePath, filePath)
@@ -167,11 +177,14 @@ func (u *S3Uploader) uploadFile(ctx context.Context, filePath, basePath string) 
 		}
 	}()
 
-	// Copy file to pipe
-	_, err = io.Copy(pw, file)
-	pw.Close()
+	// Copy file to pipe with progress bar
+	_, err = io.Copy(io.MultiWriter(pw, bar), file)
 	if err != nil {
 		return fmt.Errorf("failed to copy file: %v", err)
+	}
+	err = pw.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close pipe: %v", err)
 	}
 
 	// Wait for upload to complete
