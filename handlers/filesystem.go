@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gobwas/glob"
+	"github.com/mcpt/Sentinel/compression"
 	"github.com/mcpt/Sentinel/config"
 	"io"
 	"os"
@@ -80,9 +81,10 @@ func (h *FileSystemHandler) Backup(ctx context.Context) (string, error) {
 	}
 
 	// Create tar.gz archive
-	archivePath := filepath.Join(config.Cfg.TempDir, "filesystem.tar.gz")
+	archivePath := filepath.Join(config.Cfg.TempDir, fmt.Sprintf("filesystem.tar%s",
+		compression.Ext(config.Cfg.Compression.Format)))
 
-	cmd := exec.Command("tar", "-czf", archivePath, "-C", tempDir, ".")
+	cmd := exec.Command("tar", "-I", config.Cfg.Compression.Format, "-cf", archivePath, "-C", tempDir, ".")
 	if err := cmd.Run(); err != nil {
 		return "", fmt.Errorf("failed to create archive: %v", err)
 	}
