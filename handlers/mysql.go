@@ -59,6 +59,7 @@ func (h *MySQLHandler) getTotalSize(ctx context.Context) (int64, error) {
 		fmt.Sprintf("-p%s", config.Cfg.MySQL.Password),
 		"-e 'SELECT ROUND(SUM(data_length) * 0.8) AS \"size_bytes\" FROM information_schema.TABLES;'",
 	)
+	fmt.Println(cmd.String())
 
 	output, err := cmd.Output()
 	if err != nil {
