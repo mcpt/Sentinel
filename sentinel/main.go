@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	configFile := flag.String("config", "config.toml", "Path to configuration file")
+	configFile := flag.String("config-file", "config.toml", "Path to configuration file")
 	flag.Parse()
 
 	// Load configuration
