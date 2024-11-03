@@ -113,7 +113,7 @@ part_size = 0        # Multipart upload part size (0 for auto)
 
 3. Build the binary:
    ```bash
-   go build -o sentinel cmd/backup-system/main.go
+   go build -o sentinel sentinel/backup-system/main.go
    ```
 
 4. Create your config.toml and run:
