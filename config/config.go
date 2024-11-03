@@ -82,7 +82,7 @@ func validateConfig(config *Config) error {
 
 	fmt.Printf("Temp dir: %s\n", config.TempDir)
 	if _, err := os.Stat(config.TempDir); os.IsNotExist(err) {
-		err := os.MkdirAll(config.TempDir, 0755)
+		err := os.MkdirAll(config.TempDir, 0750)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -98,7 +98,7 @@ func performBackup(handlerList []handlers.BackupHandler, uploader *storage.S3Upl
 	backupPath := filepath.Join(config.Cfg.TempDir, "backup")
 
 	// Create temporary backup directory
-	if err := os.MkdirAll(config.Cfg.TempDir, 0755); err != nil {
+	if err := os.MkdirAll(config.Cfg.TempDir, 0750); err != nil {
 		return err
 	}
 

@@ -4,7 +4,7 @@ temp_dir = "" # Will create a new random temp directory if not specified
 debug = false
 
 [compression]
-format = "zstd"  # or "zlib" or "zstd"
+format = "zstd"  # or "zstd"
 level = 3        # Compression level (1-9)
 
 [mysql]

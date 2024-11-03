@@ -36,7 +36,7 @@ func (e *ErrMySQLBackup) Error() string {
 // NewMySQLHandler creates a new MySQL backup handler
 func NewMySQLHandler() (*MySQLHandler, error) {
 	tempDir := filepath.Join(config.Cfg.TempDir, "mysql")
-	if err := os.MkdirAll(tempDir, 0755); err != nil {
+	if err := os.MkdirAll(tempDir, 0750); err != nil {
 		return nil, &ErrMySQLBackup{Op: "init", Err: err}
 	}
 	return &MySQLHandler{tempDir: tempDir}, nil
@@ -50,7 +50,8 @@ func (h *MySQLHandler) generateBackupFilename() string {
 
 // getTotalSize estimates the total size of the database
 func (h *MySQLHandler) getTotalSize(ctx context.Context) (int64, error) {
-	cmd := exec.CommandContext(ctx, "mariadb",
+	cmd := exec.CommandContext(ctx, "mariadb", // #nosec  G204 -- All data here is coming from the config file,
+		// which if someone can modify, they can do anything they want
 		"--skip-column-names",
 		"--ssl=false",
 		"-h", config.Cfg.MySQL.Host,
@@ -77,7 +78,8 @@ func (h *MySQLHandler) getTotalSize(ctx context.Context) (int64, error) {
 
 // createMySQLDumpCommand creates the mysqldump command with proper parameters
 func (h *MySQLHandler) createMySQLDumpCommand(ctx context.Context, filename string) *exec.Cmd {
-	return exec.CommandContext(ctx, "mysqldump",
+	return exec.CommandContext(ctx, "mysqldump", // #nosec  G204 -- All data here is coming from the config file,
+		// which if someone can modify, they can do anything they want
 		"--single-transaction",
 		"--extended-insert",
 		"--create-options",

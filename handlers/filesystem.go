@@ -74,7 +74,7 @@ func (h *FileSystemHandler) shouldIncludePath(relPath string) bool {
 
 // copyFile safely copies a file from src to dst
 func copyFile(src, dst string) error {
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), 0750); err != nil {
 		return fmt.Errorf("failed to create destination directory: %w", err)
 	}
 
@@ -135,7 +135,7 @@ func (h *FileSystemHandler) processPath(basePath, path string, info os.FileInfo)
 // Backup performs the filesystem backup operation
 func (h *FileSystemHandler) Backup(ctx context.Context) (string, error) {
 	// Ensure temp directory exists
-	if err := os.MkdirAll(h.tempDir, 0755); err != nil {
+	if err := os.MkdirAll(h.tempDir, 0750); err != nil {
 		return "", &ErrFileSystem{Op: "create temp directory", Err: err}
 	}
 
