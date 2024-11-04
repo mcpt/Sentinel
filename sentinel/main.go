@@ -22,6 +22,7 @@ import (
 
 func main() {
 	configFile := flag.String("config-file", "config.toml", "Path to configuration file")
+	runNow := flag.Bool("run-now", false, "Run backup immediately, bypassing the schedule")
 	flag.Parse()
 
 	// Load configuration
@@ -59,7 +60,7 @@ func main() {
 
 	// Create cron scheduler
 	// If the schedule is empty, don't schedule the backup, just run it immediately
-	if config.Cfg.Schedule == "" {
+	if config.Cfg.Schedule == "" || *runNow {
 		if err := performBackup(backupHandlers, s3Uploader); err != nil {
 			log.Fatalf("Backup failed: %v", err)
 		}
