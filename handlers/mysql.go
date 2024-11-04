@@ -53,6 +53,7 @@ func (h *MySQLHandler) getTotalSize(ctx context.Context) (int64, error) {
 	cmd := exec.CommandContext(ctx, "mariadb", // #nosec  G204 -- All data here is coming from the config file,
 		// which if someone can modify, they can do anything they want
 		"--skip-column-names",
+		"-sss", // Removes boxing around the output
 		"--ssl=false",
 		"-h", config.Cfg.MySQL.Host,
 		"-P", config.Cfg.MySQL.Port,
@@ -60,8 +61,6 @@ func (h *MySQLHandler) getTotalSize(ctx context.Context) (int64, error) {
 		fmt.Sprintf("-p%s", config.Cfg.MySQL.Password),
 		"-e 'SELECT ROUND(SUM(data_length) * 0.8) AS \"size_bytes\" FROM information_schema.TABLES;'",
 	)
-	fmt.Println(cmd.String())
-
 	output, err := cmd.Output()
 	if err != nil {
 		return 0, &ErrMySQLBackup{Op: "size estimation", Err: err}
