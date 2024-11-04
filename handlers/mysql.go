@@ -76,13 +76,14 @@ func (h *MySQLHandler) getTotalSize(ctx context.Context) (int64, error) {
 }
 
 // createMySQLDumpCommand creates the mysqldump command with proper parameters
-func (h *MySQLHandler) createMySQLDumpCommand(ctx context.Context) *exec.Cmd {
+func (h *MySQLHandler) createMySQLDumpCommand(ctx context.Context, filename string) *exec.Cmd {
 	return exec.CommandContext(ctx, "mysqldump", // #nosec  G204 -- All data here is coming from the config file,
 		// which if someone can modify, they can do anything they want
 		"--single-transaction",
 		"--extended-insert",
 		"--create-options",
 		"--quick",
+		"--result-file="+filename,
 		"-h", config.Cfg.MySQL.Host,
 		"-P", config.Cfg.MySQL.Port,
 		"-u", config.Cfg.MySQL.User,
@@ -121,7 +122,7 @@ func (h *MySQLHandler) Backup(ctx context.Context) (string, error) {
 	)
 
 	// Create and configure mysqldump command
-	cmd := h.createMySQLDumpCommand(ctx)
+	cmd := h.createMySQLDumpCommand(ctx, filename)
 
 	// Set up pipes for output handling
 	stdout, err := cmd.StdoutPipe()
