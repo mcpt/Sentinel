@@ -61,6 +61,8 @@ func (h *MySQLHandler) getTotalSize(ctx context.Context) (int64, error) {
 		"-e 'SELECT ROUND(SUM(data_length) * 0.8) AS \"size_bytes\" FROM information_schema.TABLES;'",
 	)
 	output, err := cmd.Output()
+	fmt.Println(cmd.String())
+
 	if err != nil {
 		return 0, &ErrMySQLBackup{Op: "size estimation", Err: err}
 	}
@@ -68,6 +70,7 @@ func (h *MySQLHandler) getTotalSize(ctx context.Context) (int64, error) {
 	sizeStr := string(bytes.TrimSpace(output))
 	size, err := strconv.ParseInt(sizeStr, 10, 64)
 	if err != nil {
+		fmt.Println("Failed to convert size string to int64", err)
 		// Fallback to a default size if parsing fails
 		return 563091866, nil
 	}
