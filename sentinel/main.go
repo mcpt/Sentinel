@@ -155,6 +155,11 @@ func performBackup(handlerList []handlers.BackupHandler, uploader *storage.S3Upl
 		return err
 	}
 
+	// Delete the fs directory after creating the tarfile
+	if err := deleteDirectory(); err != nil {
+		return err
+	}
+
 	// Cleanup
 	for _, file := range backupFiles {
 		err := os.Remove(file)
@@ -167,5 +172,13 @@ func performBackup(handlerList []handlers.BackupHandler, uploader *storage.S3Upl
 		log.Printf("Failed to remove temporary backup directory: %v", err)
 	}
 
+	return nil
+}
+
+// deleteDirectory deletes the fs directory
+func deleteDirectory() error {
+	if err := os.RemoveAll(config.Cfg.Filesystem.BasePath); err != nil {
+		return fmt.Errorf("failed to delete directory: %v", err)
+	}
 	return nil
 }
