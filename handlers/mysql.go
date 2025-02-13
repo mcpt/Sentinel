@@ -48,7 +48,7 @@ func (h *MySQLHandler) generateBackupFilename() string {
 }
 
 // getTotalSize estimates the total size of the database
-func (h *MySQLHandler) getTotalSize(ctx context.Context) (int64, error) {
+func (h *MySQLHandler) getTotalSize(ctx context.Context) int64 {
 	cmd := exec.CommandContext(ctx, "mariadb", // #nosec  G204 -- All data here is coming from the config file,
 		// which if someone can modify, they can do anything they want
 		"--skip-column-names",
@@ -60,21 +60,19 @@ func (h *MySQLHandler) getTotalSize(ctx context.Context) (int64, error) {
 		fmt.Sprintf("-p%s", config.Cfg.MySQL.Password),
 		"-e 'SELECT ROUND(SUM(data_length) * 0.8) AS \"size_bytes\" FROM information_schema.TABLES;'",
 	)
-	output, err := cmd.Output()
-	fmt.Println(cmd.String())
-
-	if err != nil {
-		return 0, &ErrMySQLBackup{Op: "size estimation", Err: err}
-	}
+	output, _ := cmd.Output()
 
 	sizeStr := string(bytes.TrimSpace(output))
+	if sizeStr == "" {
+		return 564009370 // Default size if no output
+	}
 	size, err := strconv.ParseInt(sizeStr, 10, 64)
 	if err != nil {
-		fmt.Println("Failed to convert size string to int64", err)
+		fmt.Println("Failed to convert size string to int64", err, "size: ", sizeStr)
 		// Fallback to a default size if parsing fails
-		return 563091866, nil
+		return 564009370
 	}
-	return size, nil
+	return size
 }
 
 // createMySQLDumpCommand creates the mysqldump command with proper parameters
@@ -111,11 +109,9 @@ func (h *MySQLHandler) Backup(ctx context.Context) (string, error) {
 	}()
 
 	// Get total size for progress bar
-	totalSize, err := h.getTotalSize(ctx)
-	if err != nil {
-		// Log the error but continue with default size
-		fmt.Printf("Warning: Failed to get total size: %v\n", err)
-	}
+	totalSize := h.getTotalSize(ctx)
+
+	fmt.Printf("Total size of the database: %d\n", totalSize)
 
 	// Create progress bar
 	bar := progressbar.DefaultBytes(

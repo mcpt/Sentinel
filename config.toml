@@ -1,5 +1,5 @@
 # Backup system configuration
-#schedule = "0 4 * * *"  # Daily at 4 AM
+#sched  ule = "0 4 * * *"  # Daily at 4 AM
 temp_dir = "" # Will create a new random temp directory if not specified
 debug = false
 
@@ -17,7 +17,8 @@ database = "myapp"
 
 [filesystem]
 enabled = true
-base_path = "D:\\projects\\mcpt\\backups\\test"
+#base_path = "D:\\projects\\mcpt\\backups\\test"
+base_path = "/tmp/backups/"
 include_patterns = [
     "*.txt",
     "*.pdf",
@@ -32,10 +33,10 @@ exclude_patterns = [
 ]
 
 [s3]
-endpoint = "https://s3.amazonaws.com"
-region = "us-east-1"
-bucket = "my-backup-bucket"
-access_key_id = "your_access_key"
-secret_access_key = "your_secret_key"
+endpoint = "https://9ef674c7e3182148b5b136fa79415e76.r2.cloudflarestorage.com/wlmoj-backups"
+region = "auto"
+bucket = "wlmoj-backups"
+access_key_id = "f1867f1a5889ec3e93916bdbd940866e"
+secret_access_key = "eeb3b7d7c4b1273822f08cfa8484b583eab2b26ea7c5d3ff697837681898f996"
 max_concurrency = 10
 part_size=0
