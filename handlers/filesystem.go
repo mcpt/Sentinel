@@ -158,7 +158,17 @@ func (h *FileSystemHandler) Backup(ctx context.Context) (string, error) {
 	}
 
 	// Create archive
-	return h.createArchive()
+	archivePath, err := h.createArchive()
+	if err != nil {
+		return "", err
+	}
+
+	// Delete the fs directory after creating the tarfile
+	if err := h.deleteDirectory(); err != nil {
+		return "", err
+	}
+
+	return archivePath, nil
 }
 
 // Name returns the handler name
@@ -172,6 +182,14 @@ func (h *FileSystemHandler) Cleanup() error {
 		if err := os.RemoveAll(h.tempDir); err != nil {
 			return &ErrFileSystem{Op: "cleanup", Err: err}
 		}
+	}
+	return nil
+}
+
+// deleteDirectory deletes the fs directory
+func (h *FileSystemHandler) deleteDirectory() error {
+	if err := os.RemoveAll(config.Cfg.Filesystem.BasePath); err != nil {
+		return &ErrFileSystem{Op: "delete directory", Err: err}
 	}
 	return nil
 }
