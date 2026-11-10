@@ -58,7 +58,7 @@ func (h *MySQLHandler) getTotalSize(ctx context.Context) int64 {
 		"-P", config.Cfg.MySQL.Port,
 		"-u", config.Cfg.MySQL.User,
 		fmt.Sprintf("-p%s", config.Cfg.MySQL.Password),
-		"-e 'SELECT ROUND(SUM(data_length) * 0.8) AS \"size_bytes\" FROM information_schema.TABLES;'",
+		"-e", "SELECT ROUND(SUM(data_length) * 0.8) FROM information_schema.TABLES",
 	)
 	output, _ := cmd.Output()
 
@@ -127,36 +127,34 @@ func (h *MySQLHandler) Backup(ctx context.Context) (string, error) {
 		return "", &ErrMySQLBackup{Op: "start mysqldump", Err: err}
 	}
 
-	// Update progress bar based on size of the output file
-	for checkRunning(cmd) {
-		fileInfo, err := os.Stat(filename)
-		if err != nil {
-			return "", err
-		}
-		err = bar.Set64(fileInfo.Size())
-		if err != nil {
-			return "", err
-		}
-		time.Sleep(time.Second)
-	}
+	// Wait in the background; ProcessState is only set by Wait, so polling it never sees the exit
+	done := make(chan error, 1)
+	go func() { done <- cmd.Wait() }()
 
-	// Wait for the process to complete
-	if err := cmd.Wait(); err != nil {
-		return "", &ErrMySQLBackup{Op: "complete mysqldump", Err: err}
+	// Update progress bar based on size of the output file until mysqldump exits
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case err := <-done:
+			if err != nil {
+				return "", &ErrMySQLBackup{Op: "complete mysqldump", Err: err}
+			}
+			_ = bar.Finish()
+			return filename, nil
+		case <-ticker.C:
+			if fileInfo, err := os.Stat(filename); err == nil {
+				// the size is only an estimate; grow the bar instead of failing the backup
+				if fileInfo.Size() > bar.GetMax64() {
+					bar.ChangeMax64(fileInfo.Size())
+				}
+				_ = bar.Set64(fileInfo.Size())
+			}
+		}
 	}
-
-	return filename, nil
 }
 
 // Name returns the handler name
 func (h *MySQLHandler) Name() string {
 	return "MySQL Backup"
-}
-
-func checkRunning(cmd *exec.Cmd) bool {
-	if cmd == nil || cmd.ProcessState != nil && cmd.ProcessState.Exited() || cmd.Process == nil {
-		return false
-	}
-
-	return true
 }
